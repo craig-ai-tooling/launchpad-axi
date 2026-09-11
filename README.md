@@ -6,30 +6,36 @@ batch-process a CSV to fill in a token per row. Sibling to `palette-axi` / `mond
 
 ## Install
 
+### Download the binary (recommended)
+
+Pull the latest single-file build onto your `PATH` — just `curl`, `chmod`, `mv`. No `gh`,
+no token, no dependencies:
+
 ```sh
-python -m pip install -e ".[dev]"     # or: pipx install .
+curl -fsSL https://github.com/craig-ai-tooling/launchpad-axi/releases/latest/download/launchpad-axi.pyz -o launchpad-axi
+chmod +x launchpad-axi
+mv launchpad-axi ~/.local/bin/launchpad-axi        # or anywhere on your PATH
+```
+
+Or run the bundled installer (same three steps, honours `$BIN` for the target path):
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/craig-ai-tooling/launchpad-axi/main/scripts/install.sh | bash
+```
+
+`launchpad-axi.pyz` is a zipapp — it needs a Python 3.10+ interpreter on the target (every
+lab box has one), not a compiled binary. For a truly Python-free binary you'd need a per-OS
+PyInstaller build; ask and I'll add it to the release matrix.
+
+### pip
+
+```sh
+pipx install git+https://github.com/craig-ai-tooling/launchpad-axi   # onto PATH
+# or, from a checkout:
+python -m pip install -e ".[dev]"
 ```
 
 Python 3.10+, standard library only at runtime (no third-party deps).
-
-### Single-file binary
-
-Each tagged release attaches **`launchpad-axi.pyz`** — a self-contained zipapp that runs
-on any Python 3.10+ with no install and no dependencies:
-
-```sh
-gh release download --repo craig-ai-tooling/launchpad-axi --pattern 'launchpad-axi.pyz'
-chmod +x launchpad-axi.pyz
-./launchpad-axi.pyz --help
-```
-
-Build it yourself with `make build` (writes `dist/launchpad-axi.pyz`), or run straight from
-a checkout with `python3 -m launchpad_axi`. A tag push (`v*`) builds and publishes the
-artifact via `.github/workflows/release.yml`.
-
-> A `.pyz` still needs a Python interpreter on the target (every lab box has one). If you
-> ever need a truly Python-free binary, that's a PyInstaller/Nuitka build per OS+arch — ask
-> and I'll add it to the release matrix.
 
 ## Configure
 
@@ -42,6 +48,17 @@ artifact via `.github/workflows/release.yml`.
 
 The lab presents a private-CA certificate; TLS verification is intentionally disabled
 for that host.
+
+## Build from source
+
+```sh
+make build                       # writes dist/launchpad-axi.pyz
+make install                     # build + drop it on ~/.local/bin (no token needed)
+python3 -m launchpad_axi --help  # or run straight from a checkout
+```
+
+A `v*` tag builds the `.pyz` and publishes it to a GitHub Release via
+`.github/workflows/release.yml` — that release is what the install step above pulls.
 
 ## Use
 
