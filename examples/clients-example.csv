@@ -1,0 +1,5 @@
+username,email,token
+team-alpha,team-alpha@example.com,
+team-bravo,team-bravo@example.com,
+ci-runner,ci-runner@example.com,
+analytics-svc,analytics-svc@example.com,

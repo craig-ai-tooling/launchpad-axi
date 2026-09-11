@@ -5,11 +5,9 @@
 Do **not** open a public issue for a security problem.
 
 Use GitHub private vulnerability reporting:
-**Security → Advisories → Report a vulnerability** (free on public repos).
+**Security → Advisories → Report a vulnerability**.
 
-<FILL IN: contact email, if you want a second channel.>
-
-Expect an acknowledgement within `<FILL IN: e.g. 3 business days>`.
+Expect an acknowledgement within 3 business days.
 
 ## What is enabled on this repository
 

@@ -1,4 +1,4 @@
-# `<FILL IN: PROJECT_NAME>` Constitution
+# launchpad-axi Constitution
 
 The highest-authority document in this repo. Spec Kit reads it at
 `/speckit-specify`, `/speckit-plan`, `/speckit-tasks`, and `/speckit-implement`.
@@ -55,10 +55,12 @@ A rule that lives only in prose is a suggestion. Rules belong in
 (`.claude/hooks/test-hooks.sh`). Changing a guardrail requires a reviewed PR —
 that is the point, not friction to be avoided.
 
-### VII. `<FILL IN: PRINCIPLE_7>`
+### VII. Secrets are shown once and never persisted by us
 
-`<FILL IN: project-specific principle — e.g. Test-First, Library-First,
-Observability, Simplicity/YAGNI. Delete if six is enough.>`
+API tokens are printed exactly once, at mint. This tool writes a token nowhere
+except where the operator directs it (a batch output CSV), never logs a token or
+password, and caches only the session token, at `0600`. A batch output file is a
+secret bundle; a leak is a rotate-and-re-mint event, not a shrug.
 
 ---
 
@@ -103,4 +105,4 @@ justification.
 
 Agents: `AGENTS.md` is your runtime guide; this document is the authority behind it.
 
-**Version**: 1.0.0 | **Ratified**: `<FILL IN: YYYY-MM-DD>` | **Last Amended**: `<FILL IN: YYYY-MM-DD>`
+**Version**: 1.0.0 | **Ratified**: 2026-09-11 | **Last Amended**: 2026-09-11

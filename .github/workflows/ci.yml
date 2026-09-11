@@ -29,11 +29,9 @@ jobs:
         run: |
           set -e
           for f in AGENTS.md CLAUDE.md README.md \
-                   docs/design-system.md docs/components.md \
-                   docs/auth-and-sessions.md docs/security.md docs/fixes-log.md \
+                   docs/security.md docs/fixes-log.md \
                    ralph/PROMPT.md ralph/IMPLEMENTATION_PLAN.md ralph/PROGRESS.md ralph/loop.sh \
-                   .claude/settings.json .specify/memory/constitution.md \
-                   plugin/.claude-plugin/plugin.json plugin/skills/start-project/SKILL.md; do
+                   .claude/settings.json .specify/memory/constitution.md; do
             [ -f "$f" ] || { echo "::error::missing required file: $f"; exit 1; }
           done
           echo "All required files present."
@@ -119,39 +117,18 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      # hashFiles() is not available in a job-level `if`, so detect here and
-      # gate the steps below. Until a stack exists these no-op instead of
-      # failing a fresh clone.
-      - name: Detect stack
-        id: stack
-        run: |
-          if ls package.json pyproject.toml go.mod Cargo.toml >/dev/null 2>&1; then
-            echo "present=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "present=false" >> "$GITHUB_OUTPUT"
-            echo "No stack manifest yet. Fill in the AGENTS.md commands and these steps."
-          fi
-
-      # <FILL IN> language setup, e.g.:
-      # - uses: actions/setup-node@v4
-      #   with: { node-version: '22', cache: 'npm' }
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
 
       - name: Install
-        if: steps.stack.outputs.present == 'true'
-        run: 'echo "<FILL IN: npm ci>"'
+        run: python -m pip install --upgrade pip && python -m pip install -e ".[dev]"
 
       - name: Lint
-        if: steps.stack.outputs.present == 'true'
-        run: 'echo "<FILL IN: npm run lint>"'
-
-      - name: Typecheck
-        if: steps.stack.outputs.present == 'true'
-        run: 'echo "<FILL IN: npm run typecheck>"'
+        run: ruff check .
 
       - name: Test
-        if: steps.stack.outputs.present == 'true'
-        run: 'echo "<FILL IN: npm test>"'
+        run: python -m unittest discover -s tests -v
 
-      - name: Build
-        if: steps.stack.outputs.present == 'true'
-        run: 'echo "<FILL IN: npm run build>"'
+      - name: Build (compile)
+        run: python -m compileall launchpad_axi

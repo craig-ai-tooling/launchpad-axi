@@ -33,8 +33,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # <FILL IN> e.g. [javascript-typescript, python, go, ruby, java-kotlin, csharp, c-cpp, swift]
-        language: [javascript-typescript]
+        language: [python]
 
     steps:
       - uses: actions/checkout@v7

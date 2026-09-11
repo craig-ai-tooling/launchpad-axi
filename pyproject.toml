@@ -1,0 +1,28 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "launchpad-axi"
+version = "0.1.0"
+description = "Agent-ergonomic CLI over the PaletteAI Inference Launchpad admin API."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = []  # stdlib only — urllib, csv, argparse, json, ssl
+
+[project.optional-dependencies]
+dev = ["ruff>=0.6"]
+
+[project.scripts]
+launchpad-axi = "launchpad_axi.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["launchpad_axi"]
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+# E9 = syntax errors, F = pyflakes (unused imports/vars, undefined names).
+# The terse semicolon/one-line style is deliberate for a small CLI, so E7 is off.
+select = ["E9", "F"]

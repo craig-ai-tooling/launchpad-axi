@@ -21,4 +21,4 @@ is a signal that something needs a real design change rather than a fifth patch.
 
 <!-- Append below. Do not edit or reorder existing entries. -->
 
-- 2026-01-01 — Template initialized. (example entry — delete me)
+- 2026-09-11 — launchpad-axi initialized from ai-project-template.

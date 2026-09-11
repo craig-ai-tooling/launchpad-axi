@@ -5,17 +5,15 @@
 
 ## Non-negotiables
 
-### 1. Never trust the client
-Every authorization decision happens **server-side**, on every request. A hidden
-button is not access control.
+### 1. Authorization is the launchpad's job, server-side
+This tool is a client. It never makes an access decision of its own — the launchpad
+authenticates the session token and authorizes every `/admin/*` call. The tool's
+only job is to hold that token safely and briefly.
 
+```python
+# The session token is cached user-only, never world-readable:
+os.chmod(TOKEN_FILE, 0o600)
 ```
-<FILL IN: canonical server-side authz check>
-```
-
-Check **ownership**, not just authentication. "Is this user logged in?" is not the
-same question as "does this user own record 4172?" — the second one is the one that
-matters (IDOR is the most common real-world break).
 
 ### 2. Sanitize input, encode output
 - Validate at the boundary, against a schema. Reject unknown fields.
@@ -24,8 +22,11 @@ matters (IDOR is the most common real-world break).
 - Never `innerHTML` / `dangerouslySetInnerHTML` with user data. If unavoidable,
   sanitize with a maintained library and document why.
 
-```
-<FILL IN: canonical validation example>
+```python
+name = (r.get(ucol) or "").strip()
+if not name:                 # reject a blank row rather than mint a nameless client
+    errors.append((i, "(blank)", "empty username"))
+    continue
 ```
 
 ### 3. Secret hygiene
@@ -39,25 +40,18 @@ matters (IDOR is the most common real-world break).
 - Dependabot is enabled. Security updates get merged promptly, not eventually.
 - New dependency requires justification: what does it do that stdlib cannot?
 
-## Headers & transport
+## Transport
 
-`<FILL IN>` — baseline:
-
-| Header | Value |
-|---|---|
-| `Content-Security-Policy` | `<FILL IN>` |
-| `Strict-Transport-Security` | `max-age=31536000; includeSubDomains` |
-| `X-Content-Type-Options` | `nosniff` |
-| `Referrer-Policy` | `strict-origin-when-cross-origin` |
-
-HTTPS everywhere. No mixed content.
+All API calls go over HTTPS. The lab launchpad presents a **private-CA** certificate,
+so TLS verification is deliberately disabled (`ssl.CERT_NONE`) — scoped to that lab
+base URL only, and documented here so it is a known exception, not an accident. Do not
+copy that pattern for a public endpoint.
 
 ## Pre-merge security checklist
 
 - [ ] No secret added to the repo (CI + push protection verify this)
-- [ ] All new endpoints enforce authn **and** authz server-side
-- [ ] Ownership checked, not just authentication
-- [ ] User input validated against a schema at the boundary
-- [ ] No raw HTML injection path introduced
-- [ ] No new dependency without justification
-- [ ] Errors returned to users leak no internals (stack traces, SQL, paths)
+- [ ] No token, password, or session value written to logs or a committed file
+- [ ] Any file that receives a minted token is created with restrictive perms
+- [ ] TLS verification is disabled only for the documented lab host, nowhere else
+- [ ] No new dependency without justification (stdlib-first)
+- [ ] Errors surfaced to the user leak no credentials

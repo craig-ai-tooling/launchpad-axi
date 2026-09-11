@@ -3,14 +3,11 @@
 Primary context file for **every** AI agent working in this repo (Claude Code, Copilot,
 Cursor, Codex, or a human). Read this first. Everything else loads on demand.
 
-> `<FILL IN>` markers are the only things a new project must replace.
-
 ---
 
 ## Why
 
-`<FILL IN: one paragraph. What does this project do, and for whom? If an agent has
-to guess the purpose, it will guess wrong and build the wrong thing.>`
+Agent-ergonomic CLI over the PaletteAI Inference Launchpad admin API: sign in with console credentials, create clients (consumers), mint their lpai_ API tokens, and batch-process a CSV to fill a token per row. Sibling to palette-axi and monday-axi.
 
 ---
 
@@ -18,8 +15,8 @@ to guess the purpose, it will guess wrong and build the wrong thing.>`
 
 | Path | What lives here |
 |---|---|
-| `<FILL IN: src/>` | `<FILL IN: application code>` |
-| `<FILL IN: tests/>` | `<FILL IN: test suites>` |
+| `launchpad_axi/` | Application code |
+| `tests/` | Test suites |
 | `docs/` | Standards, loaded on demand (see Progressive disclosure) |
 | `ralph/` | Autonomous loop: plan, prompt, progress notebook |
 | `.specify/` | Spec Kit: constitution, templates, feature specs |
@@ -34,13 +31,13 @@ Keep this table honest. A stale command here costs more than a missing one.
 
 | Task | Command |
 |---|---|
-| Install | `<FILL IN: npm ci>` |
-| Build | `<FILL IN: npm run build>` |
-| Test (all) | `<FILL IN: npm test>` |
-| Test (single) | `<FILL IN: npm test -- path/to/file.test.ts>` |
-| Lint | `<FILL IN: npm run lint>` |
-| Format | `<FILL IN: npm run format>` |
-| Typecheck | `<FILL IN: npm run typecheck>` |
+| Install | `python -m pip install -e ".[dev]"` |
+| Build | `python -m compileall launchpad_axi` |
+| Test (all) | `python -m unittest discover -s tests` |
+| Test (single) | `python -m unittest discover -s tests` |
+| Lint | `ruff check .` |
+| Format | `ruff check .` |
+| Typecheck | `` |
 
 **Definition of done** — a change is not done until build, test, and lint all pass.
 CI runs exactly these commands; do not hand-wave them locally.
@@ -75,10 +72,7 @@ Do not read all of these. Read the one that matches what you are about to change
 
 | Touching… | Read |
 |---|---|
-| UI, layout, spacing, colour | `docs/design-system.md` |
-| A button, form, modal, nav | `docs/components.md` |
-| Login, session, token, logout | `docs/auth-and-sessions.md` |
-| User input, authz, secrets, routes | `docs/security.md` |
+| Credentials, tokens, secret handling, TLS | `docs/security.md` |
 | Anything at all | this file |
 
 ---
@@ -87,19 +81,22 @@ Do not read all of these. Read the one that matches what you are about to change
 
 One example each. Match the surrounding code over the example if they conflict.
 
-**Naming** — `<FILL IN>`
+**Naming** — modules and functions `snake_case`; each CLI subcommand has a handler named `cmd_<verb>`.
 ```
-<FILL IN: e.g. components PascalCase, hooks useCamelCase, files kebab-case>
-```
-
-**Errors** — never swallow. Fail loud, with context.
-```
-<FILL IN: e.g. throw new AppError('checkout.payment_failed', { orderId }, cause)>
+def cmd_provision(a):  # one handler per subcommand, dispatched by argparse
 ```
 
-**Tests** — `<FILL IN: what a test must cover before a PR is opened>`
+**Errors** — never swallow. Fail loud, with context. `sys.exit("message")` for a
+user-facing failure; per-row batch failures are collected and reported, never dropped.
 ```
-<FILL IN: one canonical test example>
+if not tok:
+    sys.exit("failed: %s" % res)
+```
+
+**Tests** — offline; the network layer (`consumers`/`apply_op`/`cid`) is monkeypatched.
+A PR that changes batch or column logic adds or updates a `tests/` case.
+```
+cli.apply_op = fake_apply  # stub the network, assert on the written CSV
 ```
 
 **Comments** — explain *why*, never *what*. If the code needs a "what" comment,
@@ -130,4 +127,4 @@ in a PR — that is a code change with a review, which is the point.
 - **Never invent a requirement.** Unknown → `NEEDS CLARIFICATION` → ask.
 - **Never leave the tree broken.** Build + test + lint green before you commit.
 - **Prefer editing over creating.** A new file needs a reason.
-- Reuse what `docs/components.md` already defines. Do not invent a second button.
+- **The token is the credential.** Never log it, never commit it, show it once.

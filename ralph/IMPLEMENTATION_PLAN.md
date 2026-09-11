@@ -24,9 +24,9 @@ Bad task:  `Implement authentication`
 
 <!-- Replace this block with real tasks. -->
 
-- [ ] `<FILL IN: first task — small, verifiable, one iteration>`
-- [ ] `<FILL IN: second task>`
-- [ ] `<FILL IN: third task>`
+- [ ] Add `--json` output to `mint` and `provision` so callers capture token + id programmatically.
+- [ ] Add a `rotate <client>` command: mint a fresh token, then revoke that client's previous ones.
+- [ ] Teach `batch` to set a client's tier on create from an optional `--tier` flag or CSV column.
 
 ---
 
@@ -34,4 +34,4 @@ Bad task:  `Implement authentication`
 
 Things deliberately NOT being done, so no iteration wanders into them.
 
-- `<FILL IN>`
+- Managing console *users* (`create_user`) — this tool manages clients (consumers) and their tokens only.
