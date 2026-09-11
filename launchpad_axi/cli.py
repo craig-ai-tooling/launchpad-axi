@@ -6,7 +6,7 @@ Write model: POST /admin/apply {"proposed_op":{...op..., "confirmed":true}}
              (confirmed:false returns a dry-run simulation: blast radius, risk tier.)
 
 Env:
-  LP_BASE        default https://launchpad.lab.internal
+  LP_BASE        default https://launchpad.lab.internal (set this to your host)
   LP_USER        default admin
   LP_PASS        password (else prompt)
   LP_TOKEN_FILE  where the session token is cached (default ~/.launchpad_admin_token)

@@ -16,8 +16,8 @@ Expect an acknowledgement within 3 business days.
 | Secret scanning | On — automatic and free for public repos |
 | Push protection | Enable in Settings → Code security |
 | Dependabot alerts + updates | On (`.github/dependabot.yml`) |
-| Dependency review on PRs | On (`.github/workflows/dependency-review.yml`) |
-| CodeQL code scanning | Enable Default setup, or fill in `.github/workflows/codeql.yml` |
+| Dependency review on PRs | Off — the action needs GitHub Advanced Security, unavailable on a free private repo |
+| CodeQL code scanning | Needs GHAS on a private repo; `codeql.yml` is dormant (manual dispatch only) |
 | Branch protection | Configure a ruleset on `main` (see `docs/github-automation.md`) |
 
 ## Secrets

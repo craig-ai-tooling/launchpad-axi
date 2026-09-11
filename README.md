@@ -16,7 +16,7 @@ Python 3.10+, standard library only at runtime (no third-party deps).
 
 | Env | Default | Meaning |
 |---|---|---|
-| `LP_BASE` | `https://launchpad.lab.internal` | Launchpad base URL |
+| `LP_BASE` | `https://launchpad.lab.internal` | Launchpad base URL — **set this to your host** |
 | `LP_USER` | `admin` | Console username |
 | `LP_PASS` | — | Console password (prompted if unset) |
 | `LP_TOKEN_FILE` | `~/.launchpad_admin_token` | Where the session token is cached |
