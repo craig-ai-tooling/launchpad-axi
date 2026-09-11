@@ -12,6 +12,25 @@ python -m pip install -e ".[dev]"     # or: pipx install .
 
 Python 3.10+, standard library only at runtime (no third-party deps).
 
+### Single-file binary
+
+Each tagged release attaches **`launchpad-axi.pyz`** — a self-contained zipapp that runs
+on any Python 3.10+ with no install and no dependencies:
+
+```sh
+gh release download --repo craig-ai-tooling/launchpad-axi --pattern 'launchpad-axi.pyz'
+chmod +x launchpad-axi.pyz
+./launchpad-axi.pyz --help
+```
+
+Build it yourself with `make build` (writes `dist/launchpad-axi.pyz`), or run straight from
+a checkout with `python3 -m launchpad_axi`. A tag push (`v*`) builds and publishes the
+artifact via `.github/workflows/release.yml`.
+
+> A `.pyz` still needs a Python interpreter on the target (every lab box has one). If you
+> ever need a truly Python-free binary, that's a PyInstaller/Nuitka build per OS+arch — ask
+> and I'll add it to the release matrix.
+
 ## Configure
 
 | Env | Default | Meaning |
