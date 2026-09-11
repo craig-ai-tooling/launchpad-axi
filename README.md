@@ -39,15 +39,23 @@ Python 3.10+, standard library only at runtime (no third-party deps).
 
 ## Configure
 
-| Env | Default | Meaning |
-|---|---|---|
-| `LP_BASE` | `https://launchpad.lab.internal` | Launchpad base URL — **set this to your host** |
-| `LP_USER` | `admin` | Console username |
-| `LP_PASS` | — | Console password (prompted if unset) |
-| `LP_TOKEN_FILE` | `~/.launchpad_admin_token` | Where the session token is cached |
+| Env | Default | Required? | Meaning |
+|---|---|---|---|
+| `LP_BASE` | `https://launchpad.lab.internal` | No — override for your host | Launchpad base URL — **set this to your host** |
+| `LP_USER` | `admin` | No | Console username |
+| `LP_PASS` | — | No — prompted if unset | Console password (prompted if unset) |
+| `LP_TOKEN_FILE` | `~/.launchpad_admin_token` | No | Where the session token is cached |
 
 The lab presents a private-CA certificate; TLS verification is intentionally disabled
 for that host.
+
+### doctor
+
+`launchpad-axi doctor` reports what is configured and what is missing: whether
+`LP_BASE` is reachable and whether the cached session token is still valid,
+with the exact fix for each gap (`launchpad-axi login`, or check `LP_BASE`).
+Exits `0` when both are ok, `1` when either is down — never prints a secret,
+`LP_PASS` and the token included. Add `--json` for machine-readable output.
 
 ## Build from source
 

@@ -21,6 +21,8 @@ import sys
 import urllib.error
 import urllib.request
 
+from launchpad_axi import __version__
+
 BASE = os.environ.get("LP_BASE", "https://launchpad.lab.internal").rstrip("/")
 TOKEN_FILE = os.environ.get("LP_TOKEN_FILE", os.path.expanduser("~/.launchpad_admin_token"))
 
@@ -149,6 +151,116 @@ def cmd_whoami(a):
     print(json.dumps(_req("GET", "/admin/whoami", token=_token())[1]))
 
 
+# ── doctor ───────────────────────────────────────────────────────────────
+# The whole contract in one table: (name, need, why, probe). `need` is what
+# decides what a failure means. Both connectors here are required — this tool
+# cannot do anything without a reachable launchpad and a valid session token.
+# A probe must never raise; cmd_doctor also wraps every call so one broken
+# probe can't take the whole command down — probing is its entire job.
+
+def _probe_launchpad_api():
+    """is LP_BASE reachable? A connection failure, DNS failure or TLS error is
+    down with the reason. Any HTTP response (even a 404) means the host
+    answered, so that counts as reachable. Short timeout so doctor never hangs."""
+    try:
+        req = urllib.request.Request(BASE + "/", method="GET")
+        try:
+            urllib.request.urlopen(req, context=_CTX, timeout=10)
+        except urllib.error.HTTPError:
+            pass  # the server answered — that is reachability, regardless of status
+        return "ok", "%s reachable" % BASE, ""
+    except Exception as e:
+        detail = "%s unreachable: %s: %s" % (BASE, type(e).__name__, e)
+        return "down", detail[:120], "check LP_BASE and network/DNS/TLS"
+
+
+def _probe_session_token():
+    """does the token file exist and is it readable; if so, validate it with
+    GET /admin/whoami. A missing file, an unreadable file, or a rejected
+    token are all down with fix: launchpad-axi login."""
+    if not os.path.exists(TOKEN_FILE):
+        return "down", "no token file at %s" % TOKEN_FILE, "launchpad-axi login"
+    try:
+        tok = open(TOKEN_FILE).read().strip()
+    except OSError as e:
+        return "down", ("token file unreadable: %s" % e)[:120], "launchpad-axi login"
+    if not tok:
+        return "down", "token file at %s is empty" % TOKEN_FILE, "launchpad-axi login"
+    try:
+        st, _body = _req("GET", "/admin/whoami", token=tok)
+    except Exception as e:
+        detail = "whoami check failed: %s: %s" % (type(e).__name__, e)
+        return "down", detail[:120], "launchpad-axi login"
+    if st != 200:
+        return "down", "token rejected (HTTP %d)" % st, "launchpad-axi login"
+    return "ok", "session token valid (whoami HTTP 200)", ""
+
+
+CONNECTORS = [
+    ("launchpad-api", "required", "every command talks to LP_BASE", _probe_launchpad_api),
+    ("session-token", "required", "every admin call needs a valid session token", _probe_session_token),
+]
+
+
+def _src(name):
+    return "env" if os.environ.get(name) else "default"
+
+
+def _toon(name, fields, rows):
+    """Minimal TOON-style table: name[n]{fields}: then one indented row per
+    item. Only the 'detail' column is quoted — it is the one column that can
+    carry a "|"-joined fix suggestion."""
+    head = "%s[%d]{%s}:" % (name, len(rows), ",".join(fields))
+    lines = [head]
+    for r in rows:
+        cells = []
+        for f in fields:
+            v = r[f]
+            cells.append('"%s"' % str(v).replace('"', '""') if f == "detail" else str(v))
+        lines.append("  " + ",".join(cells))
+    return "\n".join(lines)
+
+
+def cmd_doctor(a):
+    """What is configured, what is not, and exactly what fixes each gap.
+    Exits 0 only when every required connector is ok; exits 1 if one is down.
+    Never prints a secret: LP_PASS renders as the literal word set/unset, and
+    no token value, prefix, or length is ever shown — --json included."""
+    rows, results = [], []
+    for name, need, why, probe in CONNECTORS:
+        try:
+            status, detail, fix = probe()
+        except Exception as e:  # a probe blowing up must not take doctor down
+            status, detail, fix = "down", ("probe raised %s: %s" % (type(e).__name__, e))[:120], ""
+        results.append({"name": name, "need": need, "why": why, "status": status,
+                        "detail": detail, "fix": fix})
+        rows.append({"name": name, "need": need, "status": status,
+                     "detail": detail + (" | fix: %s" % fix if fix else "")})
+
+    cfg = [
+        {"var": "LP_BASE", "value": BASE, "source": _src("LP_BASE")},
+        {"var": "LP_USER", "value": os.environ.get("LP_USER", "admin"), "source": _src("LP_USER")},
+        {"var": "LP_PASS", "value": "set" if os.environ.get("LP_PASS") else "unset",
+         "source": _src("LP_PASS")},
+        {"var": "LP_TOKEN_FILE", "value": TOKEN_FILE, "source": _src("LP_TOKEN_FILE")},
+    ]
+
+    bad = [r for r in results if r["need"] == "required" and r["status"] != "ok"]
+
+    if getattr(a, "json", False):
+        print(json.dumps({
+            "version": __version__,
+            "connectors": results,
+            "config": cfg,
+            "required_down": [r["name"] for r in bad],
+        }, indent=2))
+        sys.exit(1 if bad else 0)
+
+    print(_toon("connectors", ["name", "need", "status", "detail"], rows))
+    print(_toon("config", ["var", "value", "source"], cfg))
+    sys.exit(1 if bad else 0)
+
+
 def find_col(fieldnames, wanted, aliases):
     """Pick a CSV column: an explicit --flag wins, else the first matching alias."""
     lut = {c.lower().strip(): c for c in fieldnames}
@@ -231,6 +343,10 @@ def build_parser():
     sub.add_parser("login", help="exchange console creds for a session token").set_defaults(f=cmd_login)
     sub.add_parser("whoami", help="show the current session identity").set_defaults(f=cmd_whoami)
     sub.add_parser("list", help="list clients and tokens").set_defaults(f=cmd_list)
+
+    x = sub.add_parser("doctor", help="check whether the launchpad API and session token are usable")
+    x.add_argument("--json", action="store_true", help="emit JSON instead of the text tables")
+    x.set_defaults(f=cmd_doctor)
 
     x = sub.add_parser("add-client", help="create a client (consumer)")
     x.add_argument("name")

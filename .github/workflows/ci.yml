@@ -132,3 +132,19 @@ jobs:
 
       - name: Build (compile)
         run: python -m compileall launchpad_axi
+
+      # doctor's whole reason to exist: on a bare runner every connector is down,
+      # so it must refuse (exit 1) rather than silently report healthy.
+      - name: Doctor refuses when nothing is configured
+        run: |
+          set +e
+          python -m launchpad_axi doctor --json > doctor.json
+          rc=$?
+          set -e
+          echo "doctor exit: $rc"
+          if [ "$rc" -ne 1 ]; then
+            echo "::error::doctor exited $rc on an unconfigured runner; expected 1"
+            cat doctor.json
+            exit 1
+          fi
+          python -c "import json; d=json.load(open('doctor.json')); assert d['required_down'], 'required_down must be non-empty'"
