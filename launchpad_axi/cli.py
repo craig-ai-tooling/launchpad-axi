@@ -22,6 +22,7 @@ import urllib.error
 import urllib.request
 
 from launchpad_axi import __version__
+from launchpad_axi.axi import toon
 
 BASE = os.environ.get("LP_BASE", "https://launchpad.lab.internal").rstrip("/")
 TOKEN_FILE = os.environ.get("LP_TOKEN_FILE", os.path.expanduser("~/.launchpad_admin_token"))
@@ -206,21 +207,6 @@ def _src(name):
     return "env" if os.environ.get(name) else "default"
 
 
-def _toon(name, fields, rows):
-    """Minimal TOON-style table: name[n]{fields}: then one indented row per
-    item. Only the 'detail' column is quoted — it is the one column that can
-    carry a "|"-joined fix suggestion."""
-    head = "%s[%d]{%s}:" % (name, len(rows), ",".join(fields))
-    lines = [head]
-    for r in rows:
-        cells = []
-        for f in fields:
-            v = r[f]
-            cells.append('"%s"' % str(v).replace('"', '""') if f == "detail" else str(v))
-        lines.append("  " + ",".join(cells))
-    return "\n".join(lines)
-
-
 def cmd_doctor(a):
     """What is configured, what is not, and exactly what fixes each gap.
     Exits 0 only when every required connector is ok; exits 1 if one is down.
@@ -256,8 +242,8 @@ def cmd_doctor(a):
         }, indent=2))
         sys.exit(1 if bad else 0)
 
-    print(_toon("connectors", ["name", "need", "status", "detail"], rows))
-    print(_toon("config", ["var", "value", "source"], cfg))
+    print(toon("connectors", ["name", "need", "status", "detail"], rows))
+    print(toon("config", ["var", "value", "source"], cfg))
     sys.exit(1 if bad else 0)
 
 
