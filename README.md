@@ -56,6 +56,8 @@ for that host.
 with the exact fix for each gap (`launchpad-axi login`, or check `LP_BASE`).
 Exits `0` when both are ok, `1` when either is down — never prints a secret,
 `LP_PASS` and the token included. Add `--json` for machine-readable output.
+The plain-text table is rendered by `launchpad_axi/axi.py`, vendored from
+[craig-ai-tooling/axi-py](https://github.com/craig-ai-tooling/axi-py) — never edited here; see `make vendor-axi`.
 
 ## Build from source
 

@@ -8,6 +8,7 @@ exist — no live launchpad required.
 """
 import argparse
 import contextlib
+import csv
 import io
 import json
 import os
@@ -95,6 +96,42 @@ class TestDoctorExitCodes(unittest.TestCase):
             data = json.loads(r.stdout)
             lp_pass = next(c for c in data["config"] if c["var"] == "LP_PASS")
             self.assertEqual(lp_pass["value"], "set")
+
+
+class TestTextTableEncoding(unittest.TestCase):
+    """`doctor`'s plain-text table now renders through the shared `toon()`
+    (launchpad_axi/axi.py, vendored from craig-ai-tooling/axi-py) instead of
+    the tool's own `_toon`. The old encoder only ever quoted the `detail`
+    column, so a comma or quote in any other column broke the row. These pin
+    the fixed behaviour: every column is quoted when it needs it, and an
+    empty table renders as a definitive `(none)` rather than a bare header
+    that reads the same as a truncated one."""
+
+    def test_a_comma_in_a_non_detail_column_is_quoted(self):
+        def has_a_comma():
+            return "down, retrying", "transient", "launchpad-axi login"
+
+        saved = cli.CONNECTORS[:]
+        cli.CONNECTORS[:] = [("launchpad-api", "required", "test probe", has_a_comma)]
+        try:
+            buf = io.StringIO()
+            with contextlib.redirect_stdout(buf):
+                with self.assertRaises(SystemExit):
+                    cli.cmd_doctor(argparse.Namespace(json=False))
+            out = buf.getvalue()
+            self.assertIn('"down, retrying"', out)
+            # the row still parses to exactly 4 cells: the quoted status
+            # column's own comma does not split it in two.
+            row = [ln for ln in out.splitlines() if ln.startswith("  launchpad-api,")][0]
+            cells = next(csv.reader([row.strip()]))
+            self.assertEqual(cells, ["launchpad-api", "required", "down, retrying",
+                                     "transient | fix: launchpad-axi login"])
+        finally:
+            cli.CONNECTORS[:] = saved
+
+    def test_toon_renders_an_empty_table_as_a_definitive_none(self):
+        self.assertEqual(cli.toon("connectors", ["name", "need", "status", "detail"], []),
+                         "connectors[0]{name,need,status,detail}: (none)")
 
 
 if __name__ == "__main__":
